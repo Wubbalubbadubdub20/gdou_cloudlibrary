@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <script src="../../js/vue.js"></script>
+    <link rel="stylesheet" href="../../element-ui/lib/theme-chalk/index.css">
+
+
+    <script src="../../element-ui/lib/index.js"></script>
+    <script src="../../js/axios-0.18.0.js"></script>
+
+</head>
+<style>
+
+</style>
+
+<body>
+
+<div class="banner">
+    <img src="../../images/banner.png" alt="Banner" style="width: 100%; height: auto;">
+</div>
+
+<div id="app">
+
+
+    <el-input v-model="searchText" placeholder="请输入搜索内容" style="width: 200px"
+              @keyup.enter="handleSearch"></el-input>
+    <el-select v-model="searchType" placeholder="选择搜索类型" style="width: 150px">
+        <el-option label="按书名搜索" value="name"></el-option>
+        <!--        <el-option label="按作者搜索" value="author"></el-option>-->
+        <!--        <el-option label="按分类搜索" value="type"></el-option>-->
+        <el-option label="按图书号搜索" value="card"></el-option>
+    </el-select>
+    <el-button type="primary" @click="handleSearch">搜索</el-button>
+
+    <el-table style="padding: 20px"
+              :data="tableData"
+              stripe
+
+    >
+
+
+        <!--          图书分类名称）-->
+        <el-table-column
+                prop="bookName"
+                label="图书名"
+        >
+        </el-table-column>
+        <el-table-column
+                prop="card"
+                label="图书号"
+        >
+        </el-table-column>
+
+        <el-table-column
+                prop="beginTime"
+                label="借书日期"
+        >
+        </el-table-column>
+
+        <el-table-column
+                prop="endTime"
+                label="截至日期"
+        >
+        </el-table-column>
+
+        <!--        <el-table-column label="状态">-->
+        <!--            <template slot-scope="scope">-->
+        <!--                &lt;!&ndash; 根据 status 的值动态渲染不同的内容 &ndash;&gt;-->
+        <!--                <span v-if="scope.row.status === 2">未借出</span>-->
+        <!--                <span v-else>借阅中</span>-->
+        <!--            </template>-->
+
+        <!--        </el-table-column>-->
+
+
+        <el-table-column
+                label="操作"
+                width="160"
+                align="center"
+        >
+            <template slot-scope="scope">
+                <el-button
+                        type="text"
+                        size="small"
+                        class="blueBug"
+                        @click="return_book(scope.row)"
+                >
+                    还书
+                </el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+    <!--    class="pageList"-->
+    <el-pagination
+
+            :page-sizes="[10, 20, 30, 40]"
+            :page-size="pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="counts"
+            @size-change="handleSizeChange"
+            :current-page.sync="page"
+            @current-change="handleCurrentChange"
+    ></el-pagination>
+
+
+</div>
+
+</body>
+
+<script>
+
+    let myVue = new Vue({
+        el: '#app',
+        data() {
+            return {
+                input: '',
+                counts: 0,
+                page: 1,
+                pageSize: 10,
+                tableData: [],
+                id: '',
+                status: '',
+                searchText: '',
+                searchType: 'name',
+
+            }
+        },
+        computed: {},
+        created() {
+            this.init()
+            //this.user = JSON.parse(localStorage.getItem('userInfo')).username
+        },
+        mounted() {
+        },
+        methods: {
+            async init() {
+
+
+                let params = {
+                    page: this.page,
+                    pageSize: this.pageSize
+                };
+
+                // 根据搜索类型设置请求参数
+                if (this.searchText) {
+                    if (this.searchType === 'name') {
+                        params.name = this.searchText;
+                    }   else if (this.searchType === 'card') {
+                        params.card = this.searchText;
+                    }
+                }
+                //按照分类搜索
+
+                axios.get("/book_his/page", {params})
+                    .then(res => {
+                        this.tableData = res.data.data.records.map(record => {
+                            // 格式化日期
+                            const formattedBeginTime = this.formatDate(record.beginTime);
+                            const formattedEndTime = this.formatDate(record.endTime);
+
+                            // 返回新对象，替换原始对象中的日期属性
+                            return {
+                                ...record,
+                                beginTime: formattedBeginTime,
+                                endTime: formattedEndTime
+                            };
+                        });
+                        this.counts = res.data.data.total;
+                    })
+            },
+            handleSearch() {
+                this.page = 1; // 重置页码为1
+                this.init(); // 执行搜索操作
+            },
+            handleSizeChange(val) {
+                this.pageSize = val
+                this.init()
+            },
+            handleCurrentChange(val) {
+                this.page = val
+                this.init()
+            },
+            handleQuery() {
+                this.page = 1;
+                this.init();
+            },
+            formatDate(dateString) {
+                // 创建日期对象
+                const date = new Date(dateString);
+
+                // 提取年、月、日
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+
+                // 拼接日期字符串
+                return `${year}-${month}-${day}`;
+            },
+            return_book(row){
+                const  hid = row.hid;
+                this.$confirm('确认还书吗？', '警告', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.get("/book_his?hid="+hid).then(res => {
+                        if (res.data.code === 1) {
+                            this.$message.success('还书成功！');
+                            this.handleQuery();
+                        } else {
+                            this.$message.error(res.data.msg || '操作失败')
+                        }
+                    })
+                }).catch(() => {
+                    // 如果用户点击了取消按钮，则不执行任何操作
+                });
+
+
+
+
+            }
+        }
+    })
+
+
+</script>
+
+
+</html>

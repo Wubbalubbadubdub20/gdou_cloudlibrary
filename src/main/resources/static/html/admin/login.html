@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书借阅管理系统-登录</title>
+    <!-- <script src="js/vue.js"></script> -->
+
+    <link rel="stylesheet" href="../../element-ui/lib/theme-chalk/index.css">
+
+    <script src="../../js/vue.js"></script>
+    <script src="../../element-ui/lib/index.js"></script>
+    <script src="../../js/axios-0.18.0.js"></script>
+
+</head>
+<style>
+    body {
+        /* background-image: url("../images/bg1.png"); */
+        /* position: absolute; */
+
+
+    }
+
+
+    #app {
+        width: 100%;
+        height: 100%;
+        min-width: 1000px;
+        background-image: url("../../images/BackGroundImage.jpeg");
+        background-size: 100% 100%;
+        background-position: center center;
+        overflow: auto;
+        background-repeat: no-repeat;
+        position: fixed;
+        line-height: 100%;
+        padding-top: 150px;
+
+    }
+
+    #login_card {
+        text-align: center;
+        /*让div内部文字居中*/
+        /* background-color: #fff; */
+        background-color: rgba(255, 255, 255, 0.85);
+        border-radius: 20px;
+        width: 450px;
+        height: 450px;
+        margin: auto;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+    }
+
+    .title {
+        height: 70px;
+        line-height: 100px;
+        font-weight: 650;
+        text-align: center;
+        font-size: 28px;
+        color: #7d7d7d
+    }
+
+    .login-form {
+        width: 80%;
+        height: 80%;
+        /* border: solid; */
+        margin: 0 auto;
+    }
+    .itemMargin{
+        margin-top: 10px;
+        padding: 10px;
+    }
+
+</style>
+
+<body>
+
+<div id="app">
+
+    <div id="login_card">
+        <div class="title">图书借阅管理系统-管理员登录</div>
+<!--        <div class="logo">-->
+<!--            <el-image src="../../images/logo.jpg/"></el-image>-->
+<!--        </div>-->
+<!--        <el-image-->
+<!--                style="width: 30px; height: 30px"-->
+<!--                src="../../images/logo.jpg"-->
+<!--                :fit="fill"></el-image>-->
+        <hr size="20px">
+        <div class="login-form" style="border: solid 0px">
+            <div style="margin-top: 10px;border: solid 0px;padding: 30px">
+                <el-form :model="adminInfo" ref="userInfo">
+                    <!--                    style=" padding: 8px;-->
+                    <!--                    width: 80%"-->
+
+                    <el-form-item
+                            prop="operatorName"
+                            :rules="[
+                              { required: true, message: '账号不能为空'}
+                            ]" class="itemMargin">
+
+
+                        <el-input placeholder="请输入账号" prefix-icon="el-icon-user"
+                                  v-model="adminInfo.operatorName" ></el-input>
+
+                    </el-form-item>
+
+                    <el-form-item
+                            prop="operatorPass"
+                            :rules="[
+                              { required: true, message: '密码不能为空'}
+                            ]"
+                            class="itemMargin">
+
+                        <el-input placeholder="请输入密码" prefix-icon="el-icon-lock" v-model="adminInfo.operatorPass"
+                                  show-password
+
+
+                        ></el-input>
+
+                    </el-form-item>
+
+
+
+                    <el-button   class="itemMargin"  type="primary" style="width: 80%;margin-top: 20px;" @click="sunbmitUser(adminInfo)">
+                        登录
+                    </el-button>
+<!--                   -->
+                </el-form>
+            </div>
+        </div>
+    </div>
+    <div style="position: absolute; z-index: 10;"><p>
+        @3447536171@qq.com
+    </p></div>
+</div>
+
+</body>
+
+<script>
+
+    let myVue = new Vue({
+        el: '#app',
+        data() {
+            return {
+                adminInfo: {
+                    operatorId:"",
+                    operatorName: "root",
+                    operatorPass: "root",
+                }
+
+            }
+        },
+        methods: {
+            sunbmitUser(user) {
+                localStorage.setItem('userInfoSimple',JSON.stringify(user));
+                axios.post('/admin/login', user).then(res => {
+                    if (res.data.code === 1) {
+                        this.$message({
+                            showClose: true,
+                            message: '登录成功，欢迎回来！',
+                            type: 'success'
+                        });
+                        localStorage.setItem('userInfo',JSON.stringify(res.data));
+                        window.location.href = "index.html";
+                    } else {
+                        this.$message.error(res.data.msg);
+                    }
+
+                })
+            }
+        }
+    })
+</script>
+
+
+</html>

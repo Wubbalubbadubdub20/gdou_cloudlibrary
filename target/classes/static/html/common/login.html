@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书借阅管理系统-登录</title>
+    <!-- <script src="js/vue.js"></script> -->
+
+    <link rel="stylesheet" href="../../element-ui/lib/theme-chalk/index.css">
+
+    <script src="../../js/vue.js"></script>
+    <script src="../../element-ui/lib/index.js"></script>
+    <script src="../../js/axios-0.18.0.js"></script>
+
+
+</head>
+<style>
+    body {
+        /* background-image: url("../images/bg1.png"); */
+        /* position: absolute; */
+
+
+    }
+
+
+    #app {
+        width: 100%;
+        height: 100%;
+        min-width: 1000px;
+        background-image: url("../../images/BackGroundImage.jpeg");
+        background-size: 100% 100%;
+        background-position: center center;
+        overflow: auto;
+        background-repeat: no-repeat;
+        position: fixed;
+        line-height: 100%;
+        padding-top: 150px;
+
+    }
+
+    #login_card {
+        text-align: center;
+        /*让div内部文字居中*/
+        /* background-color: #fff; */
+        background-color: rgba(255, 255, 255, 0.85);
+        border-radius: 20px;
+        width: 450px;
+        height: 450px;
+        margin: auto;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+    }
+
+    .title {
+        height: 70px;
+        line-height: 100px;
+        font-weight: 650;
+        text-align: center;
+        font-size: 28px;
+        color: #7d7d7d
+    }
+
+    .login-form {
+        width: 80%;
+        height: 80%;
+        /* border: solid; */
+        margin: 0 auto;
+    }
+
+</style>
+
+<body>
+
+<div id="app">
+
+    <div id="login_card">
+        <div class="title">图书借阅管理系统-用户登录</div>
+        <div class="login-form">
+            <div style="margin-top: 20px;">
+                <el-form :model="userInfo" ref="userInfo">
+                    <!--                    style=" padding: 8px;-->
+                    <!--                    width: 80%"-->
+
+                    <el-form-item
+                            prop="username"
+                            :rules="[
+                              { required: true, message: '账号不能为空'}
+                            ]">
+
+
+                        <el-input placeholder="请输入账号" prefix-icon="el-icon-user"
+                                  v-model="userInfo.username"></el-input>
+
+                    </el-form-item>
+
+                    <el-form-item
+                            prop="password"
+                            :rules="[
+                              { required: true, message: '密码不能为空'}
+                            ]">
+
+
+                        <!--                        padding: 8px;-->
+                        <!--                        width: 80%"-->
+                        <el-input placeholder="请输入密码" prefix-icon="el-icon-lock" v-model="userInfo.password"
+                                  show-password
+
+
+                        ></el-input>
+
+                    </el-form-item>
+
+                    <!--                    style=" width: 100%;margin-top: 10px;margin-left: -4px;"-->
+                    <el-row :span="24" style="width: 100%;">
+                        <el-col :span="14" style="float: left">
+
+                            <el-form-item
+                                    prop="code"
+                                    :rules="[
+                              { required: true, message: '验证码不能为空'},{
+                              min: 4, max: 4, message: '验证码必须为4位', trigger: 'blur'}
+                            ]">
+
+
+                                <el-input
+                                        type="text"
+                                        v-model="userInfo.code"
+                                        placeholder="请输入验证码" prefix-icon="el-icon-arrow-right"
+                                        @keyup.enter.native="send()">
+                                </el-input>
+
+
+                            </el-form-item>
+
+                        </el-col>
+                        <el-col :span="8">
+                            <img style="height: 35px" id="code" src="/CodeImageServlet" @click="change(userInfo)">
+                        </el-col>
+
+
+                    </el-row>
+                    <el-row :span="24" style="margin-top: 10px; width: 80%;">
+                        <el-col :span="12">
+                            <el-checkbox>记住密码</el-checkbox>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-popover placement="top-start" title="" width="180" trigger="hover"
+                                        content="忘记密码请联系系统管理员">
+                                <span style="color: #1890ff;float: right;" slot="reference">忘记密码</span>
+                            </el-popover>
+                        </el-col>
+                    </el-row>
+
+
+                    <el-button type="primary" style="width: 80%;margin-top: 20px;" @click="sunbmitUser(userInfo)">
+                        登录
+                    </el-button>
+                    <el-row :span="24" style="margin-top: 30px; width: 100%;">
+                        <el-col :span="12">
+                        <a style="float: left;font-size: 13px;" href="../admin/login.html">管理员登录</a>
+                        </el-col>
+
+                        <el-col :span="12">
+                            <a style="float: right;font-size: 13px;" href="register.html" >没有账号？立即注册</a>
+                        </el-col>
+
+                    </el-row>
+                </el-form>
+            </div>
+        </div>
+    </div>
+    <div style="position: absolute; z-index: 10;"><p>
+        @3447536171@qq.com
+    </p></div>
+</div>
+
+</body>
+
+<script>
+
+    let myVue = new Vue({
+        el: '#app',
+        data() {
+            return {
+                userInfo: {
+                    username: "huxuanhao",
+                    password: "123456",
+                    code: ""
+                }
+
+            }
+        },
+        methods: {
+            sunbmitUser(user) {
+                localStorage.setItem('userInfoSimple',JSON.stringify(user));
+                axios.post('/user/login', user).then(res => {
+                    if (res.data.code === 1) {
+                        this.$message({
+                            showClose: true,
+                            message: '登录成功，欢迎回来！',
+                            type: 'success'
+                        });
+                        localStorage.setItem('userInfo',JSON.stringify(res.data));
+                        window.location.href = "index.html";
+                    } else {
+                        this.$message.error(res.data.msg);
+                        this.change();
+                    }
+                })
+            },
+            change() {
+                var time = new Date().getTime();
+                document.getElementById("code").src = "/CodeImageServlet?d=" + time;
+
+            }
+        }
+    })
+</script>
+
+
+</html>

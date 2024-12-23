@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <!-- <script src="js/vue.js"></script> -->
+
+    <link rel="stylesheet" href="../../element-ui/lib/theme-chalk/index.css">
+
+    <script src="../../js/vue.js"></script>
+    <script src="../../element-ui/lib/index.js"></script>
+    <script src="../../js/axios-0.18.0.js"></script>
+
+
+</head>
+<style>
+
+</style>
+
+<body>
+
+<div id="app">
+
+
+
+
+    <el-input v-model="searchText" placeholder="请输入搜索内容" style="width: 200px"  @keyup.enter="handleSearch"></el-input>
+    <el-select v-model="searchType" placeholder="选择搜索类型" style="width: 150px">
+        <el-option label="按书名搜索" value="name"></el-option>
+        <el-option label="按作者搜索" value="author"></el-option>
+        <el-option label="按分类搜索" value="type"></el-option>
+        <el-option label="按图书号搜索" value="card"></el-option>
+    </el-select>
+    <el-button type="primary" @click="handleSearch">搜索</el-button>
+
+
+
+
+    <el-table style="padding: 20px"
+              :data="tableData"
+              stripe
+
+
+
+    >
+<!--        @selection-change="handleSelectionChange"-->
+
+
+<!--        <el-table-column type="selection" width="55"></el-table-column>-->
+        <!--          图书分类名称）-->
+        <el-table-column
+                prop="name"
+                label="图书名"
+        >
+        </el-table-column>
+        <el-table-column
+                prop="card"
+                label="图书号"
+        >
+        </el-table-column>
+        <el-table-column
+                prop="author"
+                label="作者"
+        >
+        </el-table-column>
+        <el-table-column
+                prop="num"
+                label="数量"
+        >
+        </el-table-column>
+        <el-table-column
+                prop="press"
+                label="出版社"
+        >
+        </el-table-column>
+
+        <el-table-column
+                prop="type"
+                label="分类类型"
+        >
+        </el-table-column>
+
+                <el-table-column label="状态">
+                    <template slot-scope="scope">
+                        <!-- 根据 status 的值动态渲染不同的内容 -->
+<!--                        <span v-if="scope.row.status === 2">未借出</span>-->
+<!--                        <span v-else>借阅中</span>-->
+                        <span>借阅中</span>
+                    </template>
+                </el-table-column>
+
+
+<!--        <el-table-column-->
+<!--                label="操作"-->
+<!--                width="160"-->
+<!--                align="center"-->
+<!--        >-->
+<!--            <template slot-scope="scope">-->
+<!--                <el-button-->
+<!--                        type="text"-->
+<!--                        size="small"-->
+<!--                        class="blueBug"-->
+<!--                        @click="editHandle(scope.row)"-->
+<!--                >-->
+<!--                    修改-->
+<!--                </el-button>-->
+<!--                <el-button-->
+<!--                        type="text"-->
+<!--                        size="small"-->
+<!--                        class="delBut non"-->
+<!--                        @click="deleteHandle(scope.row)"-->
+<!--                >-->
+<!--                    删除-->
+<!--                </el-button>-->
+<!--            </template>-->
+<!--        </el-table-column>-->
+    </el-table>
+
+
+
+
+
+
+
+
+    <el-pagination
+
+            :page-sizes="[10, 20, 30, 40]"
+            :page-size="pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="counts"
+            @size-change="handleSizeChange"
+            :current-page.sync="page"
+            @current-change="handleCurrentChange"
+    ></el-pagination>
+</div>
+
+</body>
+<!--<script src="../../api/member.js"></script>-->
+
+<script>
+
+    let myVue = new Vue({
+        el: '#app',
+        data() {
+            return {
+                input: '',
+                counts: 0,
+                page: 1,
+                pageSize: 10,
+                tableData: [],
+                addBookDialogVisible: false, // 控制添加图书对话框的显示与隐藏
+                editBookDialogVisible:false,
+                addBookForm: {
+                    bid: '',
+                    name: '',
+                    card: '',
+                    author: '',
+                    num: '1',
+                    press: '',
+                    type: ''
+                },
+                bookCategories: [], // 存储已有的图书分类列表
+                selectedRows: [],
+                searchText: '', // 搜索文本
+                searchType: 'name', // 默认搜索类型为书名
+
+            }
+        },
+        created() {
+            this.init();
+
+        },
+        methods: {
+            async init() {
+                // axios.get("/book_info/page?page=" + this.page + "&pageSize=" + this.pageSize + "&name=" + this.input).then(res => {
+                //     this.tableData = res.data.data.records;
+                //     this.counts = res.data.data.total;
+                // })
+
+                let params = {
+                    page: this.page,
+                    pageSize: this.pageSize,
+                    status: '1'
+                };
+
+                // 根据搜索类型设置请求参数
+                if (this.searchText) {
+                    if (this.searchType === 'name') {
+                        params.name = this.searchText;
+                    } else if (this.searchType === 'author') {
+                        params.author = this.searchText;
+                    } else if (this.searchType === 'type') {
+                        params.type = this.searchText;
+                    } else if (this.searchType === 'card') {
+                        params.card = this.searchText;
+                    }
+                }
+                //按照分类搜索
+
+                axios.get("/book_info/page", {params})
+                    .then(res => {
+                        this.tableData = res.data.data.records;
+                        this.counts = res.data.data.total;
+                    })
+            },
+            handleQuery() {
+                this.page = 1;
+                this.init();
+            },
+            handleSizeChange(val) {
+                this.pageSize = val
+                this.init()
+            },
+            handleCurrentChange(val) {
+                this.page = val
+                this.init()
+            },
+            handleSearch() {
+                this.page = 1; // 重置页码为1
+                this.init(); // 执行搜索操作
+            },
+
+
+        }
+
+
+    })
+
+
+</script>
+
+
+</html>

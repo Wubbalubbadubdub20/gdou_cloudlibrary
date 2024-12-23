@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <!-- <script src="js/vue.js"></script> -->
+    <script src="../../js/vue.js"></script>
+    <link rel="stylesheet" href="../../element-ui/lib/theme-chalk/index.css">
+
+
+    <script src="../../element-ui/lib/index.js"></script>
+    <script src="../../js/axios-0.18.0.js"></script>
+
+
+</head>
+<style>
+    #app {
+        display: flex;
+        justify-content: center; /* 水平居中 */
+        align-items: center; /* 垂直居中 */
+        height: 90vh; /* 设置高度为视窗的高度，使内容垂直居中 */
+    }
+
+    /* 设置表单的宽度 */
+    .form-container {
+        width: 700px; /* 根据需要调整表单的宽度 */
+        border: solid 0px;
+    }
+
+</style>
+
+<body>
+
+<div id="app">
+
+
+        <el-form :model="editForm" ref="editForm" label-width="80px" class="form-container" >
+            <!-- 表单项 -->
+            <el-form-item label="账号">
+                <el-input v-model="editForm.operatorName" disabled></el-input>
+            </el-form-item>
+
+            <el-form-item label="旧密码">
+                <el-input v-model="oldPassword" :type="showOldPassword ? 'text' : 'password'"></el-input>
+                <el-button icon="el-icon-view" @click="showOldPassword = !showOldPassword"></el-button>
+            </el-form-item>
+            <el-form-item label="新密码">
+                <el-input v-model="editForm.operatorPass" :type="showNewPassword ? 'text' : 'password'"></el-input>
+                <el-button icon="el-icon-view" @click="showNewPassword = !showNewPassword"></el-button>
+            </el-form-item>
+            <el-form-item label="确认密码">
+                <el-input v-model="confirmPassword" :type="showConfirmPassword ? 'text' : 'password'"></el-input>
+                <el-button icon="el-icon-view" @click="showConfirmPassword = !showConfirmPassword"></el-button>
+            </el-form-item>
+
+
+        </el-form>
+        <span slot="footer" class="dialog-footer" style="border:  0px solid;position: absolute;margin-top: 570px">
+<!--        <el-button @click="editDialogVisible = false">取 消</el-button>-->
+        <el-button type="primary" @click="handleEditSubmit">确 定</el-button>
+      </span>
+    <!--    class="pageList"-->
+
+
+</div>
+
+</body>
+
+<script>
+
+
+    let myVue = new Vue({
+        el: '#app',
+        data() {
+            return {
+                input: '',
+                counts: 0,
+                page: 1,
+                pageSize: 10,
+                tableData: [],
+                selectedRows: [],
+                searchText: '', // 搜索文本
+                searchType: 'username', // 默认搜索类型为用户名
+                editDialogVisible: false,
+                editForm: {},
+                confirmPassword: '', // 确认密码
+                showOldPassword: false, // 是否显示旧密码
+                showNewPassword: false, // 是否显示新密码
+                showConfirmPassword: false, // 是否显示确认密码
+                oldPassword:''
+
+            }
+        },
+        computed: {},
+        created() {
+            //this.user = JSON.parse(localStorage.getItem('userInfo')).username
+            this.editForm = JSON.parse(localStorage.getItem('userInfo')).data;
+            this.editForm.operatorPass = '';
+            console.log(this.editForm);
+
+        },
+        mounted() {
+        },
+        methods: {
+            // 处理修改提交
+            handleEditSubmit() {
+                if (!this.oldPassword || !this.editForm.operatorName || !this.confirmPassword ) {
+                    this.$message.error('请填写完整信息');
+                    return;
+                }
+
+                const  password = JSON.parse(localStorage.getItem('userInfoSimple')).operatorPass;
+                console.log(password);
+                if (this.oldPassword !== password) {
+                    this.$message.error('旧密码不正确');
+                    return;
+                }
+
+                if (this.editForm.operatorPass !== this.confirmPassword) {
+                    this.$message.error('新密码与确认密码不一致');
+                    return;
+                }
+
+                this.$confirm('是否提交修改？', '警告', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+
+
+                    axios.post("/admin/edit",this.editForm).then(res=>{
+                        if (res.data.code === 1){
+                            this.$message.success('修改成功！');
+
+                            localStorage.removeItem('userInfo');
+                            localStorage.removeItem('userInfoSimple')
+                            top.location.replace("login.html");
+
+                        }
+                        else {
+                            this.$message.error(res.data.msg || '注册失败！');
+                        }
+
+                    })
+
+
+                }).catch(() => {
+                    // 如果用户点击了取消按钮，则不执行任何操作
+                });
+
+            }
+        }
+    })
+
+
+</script>
+
+
+</html>

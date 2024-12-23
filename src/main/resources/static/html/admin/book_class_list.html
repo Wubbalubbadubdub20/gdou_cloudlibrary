@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <!-- <script src="js/vue.js"></script> -->
+    <script src="../../js/vue.js"></script>
+    <link rel="stylesheet" href="../../element-ui/lib/theme-chalk/index.css">
+
+
+    <script src="../../element-ui/lib/index.js"></script>
+    <script src="../../js/axios-0.18.0.js"></script>
+
+
+</head>
+<style>
+
+</style>
+
+<body>
+
+<div id="app">
+
+    <el-button
+            style="background-color: black;color: white"
+            type="primary"
+            @click="addBookType()"
+    >
+        + 新建图书分类
+    </el-button>
+    <el-input
+            v-model="input"
+            placeholder="请输入分类名称"
+            style="width: 250px"
+            clearable
+            @keyup.enter.native="handleQuery"
+    >
+        <i
+                slot="prefix"
+                class="el-input__icon el-icon-search"
+                style="cursor: pointer"
+                @click="handleQuery"
+        ></i>
+    </el-input>
+
+    <el-button
+            style="background-color: red;color: white;float:right;margin-right: 50px"
+            type="primary"
+            @click="batchDelete()"
+    >
+        批量删除
+    </el-button>
+    <el-table style="padding: 20px"
+              :data="tableData"
+              stripe
+              @selection-change="handleSelectionChange"
+
+    >
+
+        <el-table-column type="selection" width="55"></el-table-column>
+        <!--          图书分类名称）-->
+        <el-table-column
+                prop="name"
+                label="分类名称"
+        >
+        </el-table-column>
+
+        <el-table-column
+                label="操作"
+                width="160"
+                align="center"
+        >
+            <template slot-scope="scope">
+                <el-button
+                        type="text"
+                        size="small"
+                        class="blueBug"
+                        @click="editHandle(scope.row)"
+                >
+                    修改
+                </el-button>
+                <el-button
+                        type="text"
+                        size="small"
+                        class="delBut non"
+                        @click="deleteHandle(scope.row)"
+                >
+                    删除
+                </el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+<!--    class="pageList"-->
+    <el-pagination
+
+            :page-sizes="[10, 20, 30, 40]"
+            :page-size="pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="counts"
+            @size-change="handleSizeChange"
+            :current-page.sync="page"
+            @current-change="handleCurrentChange"
+    ></el-pagination>
+
+    <el-dialog
+            title="新建图书分类"
+            :visible.sync="classData.dialogVisible"
+            width="30%"
+            @close="resetForm"
+    >
+        <!-- 表单内容 -->
+        <el-form :model="classData" ref="classForm" label-width="80px">
+            <el-form-item label="分类名称" prop="name" :rules="[
+                              { required: true, message: '分类名称不能为空'}] ">
+                <el-input v-model="classData.name"></el-input>
+            </el-form-item>
+        </el-form>
+
+        <!-- 操作按钮 -->
+        <span slot="footer" class="dialog-footer">
+      <el-button @click="classData.dialogVisible = false">取 消</el-button>
+      <el-button type="primary" @click="submitForm('one')">提 交</el-button>
+      <el-button type="primary" @click="submitForm('continue')">提交并继续添加</el-button>
+    </span>
+    </el-dialog>
+
+
+    <el-dialog
+            title="修改图书分类"
+            :visible.sync="classData.editDialogVisible"
+            width="30%"
+            @close="resetForm"
+    >
+
+        <!-- 表单内容 -->
+        <el-form :model="classData" ref="classForm" label-width="80px">
+            <el-form-item label="分类名称" prop="name" :rules="[
+                              { required: true, message: '分类名称不能为空'}] ">
+                <el-input v-model="classData.name"></el-input>
+            </el-form-item>
+        </el-form>
+
+        <!-- 操作按钮 -->
+        <span slot="footer" class="dialog-footer">
+      <el-button @click="editDialogVisible()">取 消</el-button>
+      <el-button type="primary" @click="submitEditForm(classData)">提 交</el-button>
+    </span>
+    </el-dialog>
+    </el-dialog>
+
+
+</div>
+
+</body>
+
+<script>
+
+    let myVue = new Vue({
+        el: '#app',
+        data() {
+            return {
+                input: '',
+                counts: 0,
+                page: 1,
+                pageSize: 10,
+                tableData: [],
+                id: '',
+                status: '',
+                classData: {
+                    'title': '新建图书分类',
+                    'dialogVisible': false,
+                    'editDialogVisible': false,
+                    'name': '',
+                    'tid': '',
+                },
+                selectedRows: [],
+
+            }
+        },
+        computed: {},
+        created() {
+            this.init()
+            //this.user = JSON.parse(localStorage.getItem('userInfo')).username
+        },
+        mounted() {
+        },
+        methods: {
+            async init() {
+                axios.get("/book/page?page=" + this.page + "&pageSize=" + this.pageSize+"&name="+this.input).then(res => {
+                    this.tableData = res.data.data.records;
+                    this.counts = res.data.data.total;
+                })
+            },
+            handleSizeChange(val) {
+                this.pageSize = val
+                this.init()
+            },
+            handleCurrentChange(val) {
+                this.page = val
+                this.init()
+            },
+            deleteHandle(obj) {
+                // console.log(obj);
+
+                this.$confirm('此操作将永久删除该分类, 是否继续?', '提示', {
+                    'confirmButtonText': '确定',
+                    'cancelButtonText': '取消',
+                    'type': 'warning'
+                }).then(() => {
+                    // console.log(obj)
+
+                    axios.delete("/book/" + obj.tid).then(res => {
+                        if (res.data.code === 1) {
+                            this.$message.success('删除成功！')
+                            this.handleQuery()
+                        } else {
+                            this.$message.error(res.data.msg || '操作失败')
+                        }
+                    }).catch(err => {
+                        this.$message.error('请求出错了：' + err)
+                    })
+                })
+                // console.log('删除');
+            },
+            handleQuery() {
+                this.page = 1;
+                this.init();
+            },
+            addBookType() {
+                this.classData.dialogVisible = true;
+            },
+            // 提交表单
+            submitForm(action) {
+                this.$refs['classForm'].validate(valid => {
+                    if (valid) {
+                        // 如果 action 为 'one'，则提交表单并关闭对话框
+                        // 如果 action 为 'continue'，则提交表单但不关闭对话框
+                        // 根据需求进行相应的操作
+                        // console.log(this.classData.name);
+
+
+                        if (action === 'one') {
+                            axios.post('/book', this.classData, {
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                                .then(response => {
+                                    // 请求成功的处理逻辑
+                                    if (response.data.code === 1) {
+                                        this.$message.success('添加成功！')
+                                        this.handleQuery()
+                                    } else {
+                                        this.$message.error(response.data.msg || '操作失败')
+                                    }
+                                })
+
+                            // TODO: 提交表单并关闭对话框
+                            this.classData.dialogVisible = false;
+                        } else if (action === 'continue') {
+                            // console.log(this.classData.name+"11111")
+                            axios.post('/book', this.classData, {
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                                .then(response => {
+                                    // 请求成功的处理逻辑
+                                    if (response.data.code === 1) {
+                                        this.$message.success('添加成功！')
+                                        this.handleQuery();
+                                    } else {
+                                        this.$message.error(response.data.msg || '操作失败')
+                                    }
+                                })
+                            // TODO: 提交表单但不关闭对话框
+                            // 清空表单数据以便继续添加
+                            // console.log(this.classData.name+"www")
+                            this.resetForm();
+
+                            this.classData.dialogVisible = true;
+                        }
+                    }
+                });
+            },
+            // 重置表单
+            resetForm() {
+                // this.$refs['classForm'].resetFields();
+                this.classData = {
+                    title: '添加图书分类',
+                    dialogVisible: false,
+                    name: '',
+                    sort: ''
+                };
+            },
+            batchDelete() {
+                if (this.selectedRows.length === 0) {
+                    this.$message.warning('请选择要删除的数据！');
+                    return;
+                }
+
+                this.$confirm('此操作将永久删除所选分类, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    // 执行批量删除操作
+                    const tids = this.selectedRows.map(row => row.tid);
+                    // console.log(tids.toString())
+                    axios.delete("/book/batchDelete?tids=" + tids.toString()).then(res => {
+                        if (res.data.code === 1) {
+                            this.$message.success('批量删除成功！');
+                            this.handleQuery();
+                        } else {
+                            this.$message.error(res.data.msg || '操作失败');
+                        }
+                    }).catch(err => {
+                        this.$message.error('请求出错了：' + err);
+                    });
+                });
+            },
+
+// 监听复选框选择事件，更新选中的数据
+            handleSelectionChange(val) {
+                // this.selectedRows = this.selectedRows.join(",") ;
+                this.selectedRows = val || [];
+                console.log("val=" + val);
+
+            },
+            editHandle(data) {
+                this.classData.name = data.name;
+                this.classData.title = '';
+                this.classData.tid = data.tid;
+                this.classData.editDialogVisible = true;
+
+
+
+            },
+            submitEditForm(data) {
+                // console.log(data);
+                axios.put('/book?tid='+data.tid+"&name="+data.name).then(response => {
+                        if (response.data.code === 1){
+                            this.$message.success('修改成功成功！');
+                            this.handleQuery();
+                            this.classData.editDialogVisible = false;
+                            this.resetForm();
+
+                        }
+                    })
+
+
+            },
+            editDialogVisible(){
+                this.resetForm();
+                this.classData.editDialogVisible = false;
+            }
+        }
+    })
+
+
+</script>
+
+
+</html>
